@@ -1,4 +1,4 @@
-function E = set_enkf_inputs
+function E = set_enkf_inputs_template
 %% set_enkf_inputs.m  
 %
 % Set the input parameters for the Lorenz 1963 model, run within an Ensemble Kalman Filter

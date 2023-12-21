@@ -1,5 +1,5 @@
 %--------------------------------------------------------------
-function f = lorenz63_rhs (vv,sigma,rho,beta)
+function f = lorenz63_rhs(vv,sigma,rho,beta)
 
 %  Gets the right hand side of Lorenz's chaos butterfly model
 %
@@ -19,3 +19,4 @@ z = vv(3);
 f(1) = sigma*(y-x);
 f(2) = rho*x-y-x*z;
 f(3) = x*y-beta*z;
+end

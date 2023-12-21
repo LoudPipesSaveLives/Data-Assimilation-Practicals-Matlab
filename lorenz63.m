@@ -32,6 +32,7 @@ w4 = 1.0/6.0;
 %     Mean trajectory calculation
 xx1 = xin;
 fp  = lorenz63_rhs(xx1,sigma,rho,beta);
+%       [vasu] explicit impl of 4-order Runge-Kutta (y not use ode45 ?)
 x1  = dt*fp;
 xx2 = xin+ 0.5*x1;
 fp  = lorenz63_rhs(xx2,sigma,rho,beta);
@@ -42,3 +43,4 @@ x3  = dt*fp;
 xx4 = xin+ x3;
 
 xout = xin + w1*x1 + w2*x2 + w3*x3 + w4*x4;
+end

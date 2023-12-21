@@ -1,4 +1,4 @@
-function A = enkf_l63(E)
+function A = EnKF_l63(E)
 %% EnKF_l63.m
 %
 % Run the Lorenz 1963 model and 
@@ -59,8 +59,8 @@ YOBS 	= zeros(3,nT)+NaN;
 %% initial conditions
 XT(:,1) = xt0;			% initial truth
 xf 	= xt0+sig0*rand(3,1);	% initial forecast
-for iens = 1:N
-  XENS(iens,:,1) = xf0 + sig0*randn(3,1);
+for iens = 1:N %[vasu] for each ensemble iter, w/ total N
+  XENS(iens,:,1) = xf0 + sig0*randn(3,1); %[v] init 'prior' as normal dist
 end
 
 %% define the observation error covariance matrix  
@@ -72,8 +72,8 @@ if obsx, H(1,1) = 1; end
 if obsy, H(2,2) = 1; end
 if obsz, H(3,3) = 1; end
 
-% note that this code is not (yet) equipped to handle cases were we observe single obs AND 
-% averages -- throw an error in this case
+% note that this code is not (yet) equipped to handle cases were we observe
+% - single obs AND averages -- throw an error in this case
 observe_averages = obs_meanxy+obs_meanyz+obs_meanxz;
 observe_single_variables = obsx+obsy+obsz;
 if (observe_averages > 0) && (observe_single_variables > 0)
@@ -96,11 +96,11 @@ end
 
 %% Loop in time
 xfens = squeeze(XENS(:,:,1));
-for k = 1:nT-1
+for k = 1:nT-1 %[vasu] for each time
 
-	if E.run_filter	
-		% are there observations?
-		if (mod(t(k),tobs) == 0)
+	if E.run_filter	%[vasu] optional run Kalman-Filter (KF)
+		
+		if (mod(t(k),tobs) == 0) % are there observations?
 			
 			% create observations of the true state 
 			YOBS(:,k) = H*XT(:,k)+H*sig_obs*rand(3,1);
@@ -127,42 +127,45 @@ for k = 1:nT-1
 				% for each ensemble member, create a perturbed observation vector
 				yens = YOBS(:,k)+H*sig_obs*rand(3,1);
 				XENS(iens,:,k) = xfens(iens,:)' + K*(yens - H*xfens(iens,:)');
-			end
+            end
 
-		else
-			% if no observation, then the forecast becomes the analysis
-			XENS(:,:,k) = xfens;
-		end
-	else
+        else
+            % if no observation, then the forecast becomes the analysis
+            XENS(:,:,k) = xfens;
+        end
+        
+    else
 	    % if not running the filter, then the forecast is the analysis
-	    XENS(:,:,k) = xfens;
-	    end
-
-
-	% regardless of whether there's been an observation, the analysis error covariance matrix comes from the ensemble
-	D = zeros(3,N);
-	for iens = 1:N
-	D(:,iens) = XENS(iens,:,k) - mean(XENS(:,:,k),1);
+	    XENS(:,:,k) = xfens; %[v] same val @ this time 'k' as init val line98
 	end
-	Pa = (1/N)*D*D';
+
+
+	% regardless of whether there's been an observation, the analysis error
+    % - covariance matrix comes from the ensemble
+	D = zeros(3,N);
+	for iens = 1:N %[vasu] for each ensemble 'iens' in total 'N'
+        D(:,iens) = XENS(iens,:,k) - mean(XENS(:,:,k),1);
+	end
+	Pa = (1/N)*(D*D');
  
-	% save the diagonals of the analysis error covariance matrix -- these are the variances
+	% save the diagonals of the analysis error covariance matrix -- 
+    % - these are the variances
 	S(:,k) = diag(Pa);
 
-	% evolve the truth forward
+	% evolve the "truth" forward
 	XT(:,k+1) = lorenz63(XT(:,k), sigma, rho, beta, dt);
 
-	% evolve the analysis ensemble forward to become the next forecast
+	% evolve the "analysis ensemble" forward to become the next forecast
 	xfens = zeros(N,3);
 	for iens = 1:N
-	xfens(iens,:)  = lorenz63(XENS(iens,:,k), sigma, rho, beta, dt);
+        xfens(iens,:)  = lorenz63(XENS(iens,:,k), sigma, rho, beta, dt);
 	end
 end
 
 %---------------PLOTTING----------------------------------
 
 %% Compute a few other output quantities
-XA = squeeze(mean(XENS,1));
+XA = squeeze(mean(XENS,1)); %[vasu] mean across all the ensembles, 1-dim
 
 %% Produce Plots!
 YL = {'x','y','z'};
@@ -170,7 +173,7 @@ YL = {'x','y','z'};
 %% definte some plot settings
 LW = 2;		% line width
 tcol = [0,0,0];
-acol = [217,95,2]/256.0;
+% acol = [217,95,2]/256.0; %[vasu] commented, repeated line below
 acol = [102,166,30]/256.0;
 ocol = [241,41,138]/256.0;
 ecol = .7*ones(1,3);
@@ -245,3 +248,9 @@ A = struct('xt',XT(1,:),...
 	'zo',YOBS(3,:),...
 	'ETave',ETave,...
 	'EAave',EAave);
+
+%[vasu]
+figure(3); plot3(A.xt,A.yt,A.zt,'Color', tcol);
+hold on; plot3(A.xa,A.ya,A.za,'Color', acol);
+
+end

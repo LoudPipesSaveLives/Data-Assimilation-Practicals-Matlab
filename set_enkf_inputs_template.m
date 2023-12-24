@@ -18,8 +18,8 @@ dt 	= 0.01;
 %% ASSIMILATION PARAMETERS
 run_filter 	= 0;	% set to 1 to run the EnKF
 sig0 		= 0.5;	% initial forecast error variance
-sig_obs		= 0.5;	% observation errror covariance
-N		= 10;	% ensemble size
+sig_obs		= 0.5;	% observation error covariance
+N           = 10;	% ensemble size
 Tend		= 30;	% total integration time
 tobs 		= 3.0;	% observation interval 
 localize 	= 0;	% set to 1 to use only the diagonals of the covariance matrix

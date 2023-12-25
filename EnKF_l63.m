@@ -119,7 +119,7 @@ for k = 1:nT-1 %[vasu] for each time
 			% get the forecast error covariance matrix from the ensemble
 			D = zeros(3,N);
 % 			for iens = 1:N, D(:,iens) = xfens(iens,:) - mean(xfens,1); end %[v] commented
-            D = (xfens - repmat( mean(xfens,1), [size(xfens,1),1] ))'; %[v]
+            D = (xfens - repmat( mean(xfens,1), [size(xfens,1),1] ))'; %[v] vectorized
 			Pf1 = (1/N)*D*D';
 
 			% localize the covariance matrix?
@@ -163,7 +163,7 @@ for k = 1:nT-1 %[vasu] for each time
 %     end
     D = ( XENS(:,:,k) - ...
         repmat( mean(XENS(:,:,k),1), [size(XENS(:,:,k),1),1] )...
-        )'; %[v]
+        )'; %[v] vectorized
 	Pa = (1/N)*(D*D');
  
 	% save the diagonals of the analysis error covariance matrix -- 

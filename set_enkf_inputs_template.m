@@ -11,12 +11,12 @@ function E = set_enkf_inputs_template
 %-------------modify this part----------------------------------------------
 %% MODEL PARAMETERS 
 sigma 	= 10;
-rho	= 28;
+rho     = 28;
 beta	= 8/3;
-dt 	= 0.01;
+dt      = 0.01;
 
 %% ASSIMILATION PARAMETERS
-run_filter 	= 0;	% set to 1 to run the EnKF
+run_filter 	= 1;	% set to 1 to run the EnKF
 sig0 		= 0.5;	% initial forecast error variance
 sig_obs		= 0.5;	% observation error covariance
 N           = 10;	% ensemble size

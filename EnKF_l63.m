@@ -108,17 +108,18 @@ xfens = squeeze(XENS(:,:,1));
 for k = 1:nT-1 %[vasu] for each time
 
 	if E.run_filter	%[vasu] optional run Kalman-Filter (KF)
+        %[v] cf. Apndx.B, pg.17, 2022_Pirk - DA in LES
 		
 		if (mod(t(k),tobs) == 0) % are there observations?
 			
 			% create observations of the true state 
-			YOBS(:,k) = H*XT(:,k)+H*sig_obs*rand(3,1);
+			YOBS(:,k) = H*( XT(:,k) + sig_obs*rand(3,1) );
+            %[v] obs(s) uniform dist centered at the true val XT
 
 			% get the forecast error covariance matrix from the ensemble
 			D = zeros(3,N);
-			for iens = 1:N
-				D(:,iens) = xfens(iens,:) - mean(xfens,1);
-			end
+% 			for iens = 1:N, D(:,iens) = xfens(iens,:) - mean(xfens,1); end %[v] commented
+            D = (xfens - repmat( mean(xfens,1), [size(xfens,1),1] ))'; %[v]
 			Pf1 = (1/N)*D*D';
 
 			% localize the covariance matrix?
@@ -129,13 +130,18 @@ for k = 1:nT-1 %[vasu] for each time
 			end
 
 			% update the entire ensemble with the observations
+            % 1. [v] the Kalman-gain matrix, cf. eq.B2, 2022_Pirk
 			K_bottom = H*Pf*H' + R;
-			K_top = H*Pf';
-			K = K_top * inv(K_bottom);
-			for iens = 1:N
-				% for each ensemble member, create a perturbed observation vector
+			K_top = H*Pf'; %[v] note, here X and Y_cap are the same
+			K = K_top / (K_bottom); %[v]K_top * inv(K_bottom);
+            
+            % 2. [v] calc analysis (?) using KF/kalman eq., cf. eq.B1
+			for iens = 1:N % for each ensemble member,
+                % create a perturbed observation vector
 				yens = YOBS(:,k)+H*sig_obs*rand(3,1);
-				XENS(iens,:,k) = xfens(iens,:)' + K*(yens - H*xfens(iens,:)');
+                
+				XENS(iens,:,k) = xfens(iens,:)' +...
+                    K*(yens - H*xfens(iens,:)');
             end
 
         else
@@ -152,9 +158,12 @@ for k = 1:nT-1 %[vasu] for each time
 	% regardless of whether there's been an observation, the analysis error
     % - covariance matrix comes from the ensemble
 	D = zeros(3,N); %[v] for THIS 'k' time, changes every 'k' iter
-	for iens = 1:N %[vasu] for each ensemble 'iens' in total 'N'
-        D(:,iens) = XENS(iens,:,k) - mean(XENS(:,:,k),1);
-	end
+% 	for iens = 1:N %[vasu] for each ensemble 'iens' in total 'N'
+%         D(:,iens) = XENS(iens,:,k) - mean(XENS(:,:,k),1);
+%     end
+    D = ( XENS(:,:,k) - ...
+        repmat( mean(XENS(:,:,k),1), [size(XENS(:,:,k),1),1] )...
+        )'; %[v]
 	Pa = (1/N)*(D*D');
  
 	% save the diagonals of the analysis error covariance matrix -- 
@@ -162,10 +171,10 @@ for k = 1:nT-1 %[vasu] for each time
 	S(:,k) = diag(Pa);
     
     %[v] w/ dynamical model = lorenz63 (M, cf. 2022_Pirk, eq.2, pg.3):
-	% evolve the "truth" forward
+	% 1. evolve the "truth" forward
 	XT(:,k+1) = lorenz63(XT(:,k), sigma, rho, beta, dt);
 
-	% evolve the "analysis ensemble" forward to become the next forecast
+	% 2. evolve the "analysis ensemble" forward to become the next forecast
 	xfens = zeros(N,3);
 	for iens = 1:N %[v] for each ensemble, evolve forecast
         xfens(iens,:)  = lorenz63(XENS(iens,:,k), sigma, rho, beta, dt);
